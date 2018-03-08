@@ -1,0 +1,5 @@
+pybdsf (1.8.13-1kern1) xenial; urgency=medium
+
+  * Initial build, thanks to S. Bourke!
+
+ -- KERN packaging <packaging@kernsuite.info>  Thu, 08 Mar 2018 16:44:09 +0200
