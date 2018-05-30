@@ -1,3 +1,13 @@
+pybdsf (1.8.14-1kern1) bionic; urgency=medium
+
+  [ Athanaseus Javas Ramaila ]
+  * Add watch file
+
+  [ Gijs Molenaar ]
+  * New upstream version 1.8.14
+
+ -- KERN packaging <packaging@kernsuite.info>  Wed, 30 May 2018 12:48:25 +0200
+
 pybdsf (1.8.13-1kern1) xenial; urgency=medium
 
   * Initial build, thanks to S. Bourke!

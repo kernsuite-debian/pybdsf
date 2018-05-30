@@ -1,0 +1,7 @@
+.debhelper/
+.gitignore
+files
+pybdsf.postinst.debhelper
+pybdsf.prerm.debhelper
+pybdsf.substvars
+pybdsf/
