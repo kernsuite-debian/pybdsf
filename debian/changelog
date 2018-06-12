@@ -1,3 +1,10 @@
+pybdsf (1.8.14-1kern2) bionic; urgency=medium
+
+  [ Gijs Molenaar ]
+  * remove wcs dependency
+
+ -- KERN packaging <packaging@kernsuite.info>  Tue, 12 Jun 2018 16:55:52 +0200
+
 pybdsf (1.8.14-1kern1) bionic; urgency=medium
 
   [ Athanaseus Javas Ramaila ]
