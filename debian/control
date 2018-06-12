@@ -22,7 +22,7 @@ Depends:
  ${python:Depends},
  ${misc:Depends},
  python-pyfits,
- python-pywcs
+ python-astropy
 Description:Python Blob Detection and Source Finder
  PyBDSF (the Python Blob Detection and Source Finder, formerly PyBDSM)
  is a tool designed to decompose radio interferometry images into sources
