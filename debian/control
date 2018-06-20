@@ -10,6 +10,7 @@ Build-Depends:
  python-numpy,
  python-dev,
  libboost-python-dev,
+ libboost-numpy-dev,
  gfortran
 Standards-Version: 3.9.7
 Homepage: http://www.astron.nl/citt/pybdsf/
