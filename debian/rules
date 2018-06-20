@@ -10,6 +10,10 @@ export PYBUILD_AFTER_INSTALL := \
 %:
 	dh $@ --with python2 --buildsystem=pybuild
 
+override_dh_python:
+	dh_python
+	dh_numpy
+
 override_dh_clean:
 	dh_clean
 	rm -rf .pybuild

@@ -1,6 +1,6 @@
 Source: pybdsf
 Section: python
-Priority: extra
+Priority: optional
 Maintainer: KERN packaging <packaging@kernsuite.info>
 Build-Depends:
  debhelper (>= 8.0.0),
