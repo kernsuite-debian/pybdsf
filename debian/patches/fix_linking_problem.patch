@@ -1,0 +1,15 @@
+Description: not sure why this suddenly fails
+
+--- pybdsf-1.8.14.orig/setup.py
++++ pybdsf-1.8.14/setup.py
+@@ -103,7 +103,9 @@ def main():
+     fext=Extension(
+         name="bdsf._pytesselate",
+         sources=["src/fortran/pytess_simple.f",
+-                 "src/fortran/pytess_roundness.f"]
++                 "src/fortran/pytess_roundness.f"],
++        libraries=['python2.7'],
++        extra_link_args=['-nostartfiles'],
+         );
+     fext.f2py_options=[""]
+     extensions.append(fext)

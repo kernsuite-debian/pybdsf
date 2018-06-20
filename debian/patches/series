@@ -1,2 +1,3 @@
 #setup.patch
 boost_numpy.patch
+fix_linking_problem.patch
