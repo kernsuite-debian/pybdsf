@@ -5,7 +5,7 @@
 export DH_VERBOSE=1
 export PYBUILD_AFTER_INSTALL := \
        mv {destdir}/{install_dir}/bdsf/nat/natgridmodule.so \
-               {destdir}/{install_dir}/bdsf/nat/natgridmodulemodule.so
+          {destdir}/{install_dir}/bdsf/nat/natgridmodulemodule.so
 
 %:
 	dh $@ --with python2 --buildsystem=pybuild
@@ -13,8 +13,3 @@ export PYBUILD_AFTER_INSTALL := \
 override_dh_python:
 	dh_python
 	dh_numpy
-
-override_dh_clean:
-	dh_clean
-	rm -rf .pybuild
-	rm -rf *.egg-info

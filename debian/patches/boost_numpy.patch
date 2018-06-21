@@ -1,8 +1,8 @@
-Description: add missing boost numpy dependency
+Description: fix boost 1.65 compatability
 
 --- pybdsf-1.8.14.orig/setup.py
 +++ pybdsf-1.8.14/setup.py
-@@ -118,7 +118,7 @@ def main():
+@@ -119,7 +119,7 @@ def main():
                   "src/c++/cbdsm_main.cc",
                   "src/c++/stat.cc",
                   "src/c++/num_util/num_util.cpp"],
