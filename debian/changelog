@@ -1,3 +1,11 @@
+pybdsf (1.8.14-1kern4) bionic; urgency=medium
+
+  [ Gijs Molenaar ]
+  * rever accidental commit
+  * properly fix the shared lib problem
+
+ -- KERN packaging <packaging@kernsuite.info>  Thu, 21 Jun 2018 12:29:38 +0200
+
 pybdsf (1.8.14-1kern3) bionic; urgency=medium
 
   * fix boost 1.65 compatbility
