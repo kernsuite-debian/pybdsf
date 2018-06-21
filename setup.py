@@ -118,7 +118,7 @@ def main():
                  "src/c++/cbdsm_main.cc",
                  "src/c++/stat.cc",
                  "src/c++/num_util/num_util.cpp"],
-         libraries=['minpack', 'port3', 'gfortran', boost_python, 'boost_numpy-py27'],
+         libraries=['minpack', 'port3', 'gfortran', boost_python],
          include_dirs=["src/c++"],
          library_dirs=[join(srcpath,"minpack"), join(srcpath,"port3")]
          ))
