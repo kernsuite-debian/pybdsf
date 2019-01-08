@@ -1,0 +1,14 @@
+Description: Add missing linking flag
+
+--- pybdsf-1.8.15.orig/setup.py
++++ pybdsf-1.8.15/setup.py
+@@ -146,7 +146,8 @@ def main():
+         sources=[
+             "src/fortran/pytess_simple.f",
+             "src/fortran/pytess_roundness.f"
+-        ]
++        ],
++        extra_link_args=['-shared']
+     )
+     fext.f2py_options = [""]
+     extensions.append(fext)
