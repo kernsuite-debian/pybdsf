@@ -1,8 +1,17 @@
 language: python
+
+python:
+  - 2.7
+  - 3.5
+
+matrix:
+  allow_failures:
+  - python: 3.5
+
 before_install:
   - sudo apt-get -qq update
   - sudo apt-get install -y libboost-python-dev gfortran
-  - pip install setuptools numpy scipy pyfits pywcs
+  - pip install setuptools numpy scipy astropy
 
 install: "python setup.py install"
 

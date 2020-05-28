@@ -6,95 +6,24 @@ by gaul2srl. The position angle is defined from North, with positive angles
 towards East.
 
 """
+from __future__ import absolute_import
 
-from image import *
-from islands import *
-from gausfit import Gaussian
-from gaul2srl import *
-from preprocess import Op_preprocess
-from rmsimage import Op_rmsimage
-from threshold import Op_threshold
-from islands import Op_islands
-from gausfit import Op_gausfit
-
-from gaul2srl import Op_gaul2srl
-from make_residimage import Op_make_residimage
-from const import fwsig
-import mylogger
+from .image import *
+from .islands import *
+from .gaul2srl import *
+from .preprocess import Op_preprocess
+from .rmsimage import Op_rmsimage
+from .threshold import Op_threshold
+from .islands import Op_islands
+from .gausfit import Op_gausfit
+from .gaul2srl import Op_gaul2srl
+from .make_residimage import Op_make_residimage
+from .const import fwsig
+from . import mylogger
 import numpy as N
-import functions as func
-import statusbar
+from . import functions as func
+from . import statusbar
 
-### Insert polarization attributes into Gaussian and Source classes
-Gaussian.total_flux_Q        = Float(doc="Total flux density (Jy), Stokes Q", colname='Total_Q',
-                                   units='Jy')
-Gaussian.total_fluxE_Q       = Float(doc="Error in total flux density (Jy), Stokes Q", colname='E_Total_Q',
-                                   units='Jy')
-Gaussian.total_flux_U        = Float(doc="Total flux density (Jy), Stokes U", colname='Total_U',
-                                   units='Jy')
-Gaussian.total_fluxE_U       = Float(doc="Error in total flux density (Jy), Stokes U", colname='E_Total_U',
-                                   units='Jy')
-Gaussian.total_flux_V        = Float(doc="Total flux density (Jy), Stokes V", colname='Total_V',
-                                   units='Jy')
-Gaussian.total_fluxE_V       = Float(doc="Error in total flux density (Jy), Stokes V", colname='E_Total_V',
-                                   units='Jy')
-Gaussian.lpol_fraction       = Float(doc="Linear polarisation fraction",
-                                   colname='Linear_Pol_frac', units=None)
-Gaussian.lpol_fraction_loerr   = Float(doc="Linear polarisation fraction low error",
-                                   colname='Elow_Linear_Pol_frac', units=None)
-Gaussian.lpol_fraction_hierr   = Float(doc="Linear polarisation fraction high error",
-                                   colname='Ehigh_Linear_Pol_frac', units=None)
-Gaussian.cpol_fraction       = Float(doc="Circular polarisation fraction",
-                                   colname='Circ_Pol_Frac', units=None)
-Gaussian.cpol_fraction_loerr   = Float(doc="Circular polarisation fraction low error",
-                                   colname='Elow_Circ_Pol_Frac', units=None)
-Gaussian.cpol_fraction_hierr   = Float(doc="Circular polarisation fraction high error",
-                                   colname='Ehigh_Circ_Pol_Frac', units=None)
-Gaussian.tpol_fraction       = Float(doc="Total polarisation fraction",
-                                   colname='Total_Pol_Frac', units=None)
-Gaussian.tpol_fraction_loerr   = Float(doc="Total polarisation fraction low error",
-                                   colname='Elow_Total_Pol_Frac', units=None)
-Gaussian.tpol_fraction_hierr   = Float(doc="Total polarisation fraction high error",
-                                   colname='Ehigh_Total_Pol_Frac', units=None)
-Gaussian.lpol_angle          = Float(doc="Polarisation angle (deg from North towards East)",
-                                   colname='Linear_Pol_Ang', units='deg')
-Gaussian.lpol_angle_err      = Float(doc="Polarisation angle error (deg)",
-                                   colname='E_Linear_Pol_Ang', units='deg')
-
-Source.total_flux_Q        = Float(doc="Total flux density (Jy), Stokes Q", colname='Total_Q',
-                                   units='Jy')
-Source.total_fluxE_Q       = Float(doc="Error in total flux density (Jy), Stokes Q", colname='E_Total_Q',
-                                   units='Jy')
-Source.total_flux_U        = Float(doc="Total flux density (Jy), Stokes U", colname='Total_U',
-                                   units='Jy')
-Source.total_fluxE_U       = Float(doc="Error in total flux density (Jy), Stokes U", colname='E_Total_U',
-                                   units='Jy')
-Source.total_flux_V        = Float(doc="Total flux density (Jy), Stokes V", colname='Total_V',
-                                   units='Jy')
-Source.total_fluxE_V       = Float(doc="Error in total flux density (Jy), Stokes V", colname='E_Total_V',
-                                   units='Jy')
-Source.lpol_fraction       = Float(doc="Linear polarisation fraction",
-                                   colname='Linear_Pol_frac', units=None)
-Source.lpol_fraction_loerr   = Float(doc="Linear polarisation fraction low error",
-                                   colname='Elow_Linear_Pol_frac', units=None)
-Source.lpol_fraction_hierr   = Float(doc="Linear polarisation fraction high error",
-                                   colname='Ehigh_Linear_Pol_frac', units=None)
-Source.cpol_fraction       = Float(doc="Circular polarisation fraction",
-                                   colname='Circ_Pol_Frac', units=None)
-Source.cpol_fraction_loerr   = Float(doc="Circular polarisation fraction low error",
-                                   colname='Elow_Circ_Pol_Frac', units=None)
-Source.cpol_fraction_hierr   = Float(doc="Circular polarisation fraction high error",
-                                   colname='Ehigh_Circ_Pol_Frac', units=None)
-Source.tpol_fraction       = Float(doc="Total polarisation fraction",
-                                   colname='Total_Pol_Frac', units=None)
-Source.tpol_fraction_loerr   = Float(doc="Total polarisation fraction low error",
-                                   colname='Elow_Total_Pol_Frac', units=None)
-Source.tpol_fraction_hierr   = Float(doc="Total polarisation fraction high error",
-                                   colname='Ehigh_Total_Pol_Frac', units=None)
-Source.lpol_angle          = Float(doc="Polarisation angle (deg from North towards East)",
-                                   colname='Linear_Pol_Ang', units='deg')
-Source.lpol_angle_err      = Float(doc="Polarisation angle error (deg)",
-                                   colname='E_Linear_Pol_Ang', units='deg')
 
 class Op_polarisation(Op):
     """ Finds the flux in each Stokes and calculates the polarisation fraction
@@ -142,7 +71,6 @@ class Op_polarisation(Op):
               mylogger.userinfo(mylog, "\nChecking PI image for new sources")
 
               mask = img.mask_arr
-              minsize = img.opts.minpix_isl
 
               # Set up image object for PI image.
               pi_chain, pi_opts = self.setpara_bdsm(img)
@@ -179,9 +107,14 @@ class Op_polarisation(Op):
               new_src = []
               new_gaus = []
               n_new_src = 0
-              isl_id = img.islands[-1].island_id
-              src_id = img.sources[-1].source_id
-              gaus_id = img.gaussians[-1].gaus_num
+              if len(img.islands) == 0:
+                  isl_id = 0
+                  src_id = 0
+                  gaus_id = 0
+              else:
+                  isl_id = img.islands[-1].island_id
+                  src_id = img.sources[-1].source_id
+                  gaus_id = img.gaussians[-1].gaus_num
               for pi_isl in pimg.islands:
                   new_sources = []
                   for pi_src in pi_isl.sources:
@@ -198,6 +131,16 @@ class Op_polarisation(Op):
                           pi_src.specin_fluxE = [N.NaN]
                           pi_src.specin_freq = [N.NaN]
                           pi_src.specin_freq0 = N.NaN
+                          for gaus in pi_src.gaussians:
+                              gaus.island_id = isl_id
+                              gaus.source_id = src_id
+                              gaus.spec_indx = N.NaN
+                              gaus.e_spec_indx = N.NaN
+                              gaus.spec_norm = N.NaN
+                              gaus.specin_flux = [N.NaN]
+                              gaus.specin_fluxE = [N.NaN]
+                              gaus.specin_freq = [N.NaN]
+                              gaus.specin_freq0 = N.NaN
                           new_sources.append(pi_src)
                           new_src.append(pi_src)
                           n_new_src += 1
@@ -229,10 +172,10 @@ class Op_polarisation(Op):
 
           for isl in img.islands:
             isl_bbox = isl.bbox
-            ch0_I = img.ch0_arr[isl_bbox]
-            ch0_Q = img.ch0_Q_arr[isl_bbox]
-            ch0_U = img.ch0_U_arr[isl_bbox]
-            ch0_V = img.ch0_V_arr[isl_bbox]
+            ch0_I = img.ch0_arr[tuple(isl_bbox)]
+            ch0_Q = img.ch0_Q_arr[tuple(isl_bbox)]
+            ch0_U = img.ch0_U_arr[tuple(isl_bbox)]
+            ch0_V = img.ch0_V_arr[tuple(isl_bbox)]
             ch0_images = [ch0_I, ch0_Q, ch0_U, ch0_V]
 
             for i, src in enumerate(isl.sources):
@@ -254,7 +197,6 @@ class Op_polarisation(Op):
                     if (sind==0 and hasattr(src, '_pi')) or sind > 0: # Fit I only for PI sources
                         p, ep = func.fit_mulgaus2d(image, gg, x, y, srcmask, fitfix)
                         for ig in range(len(fitfix)):
-                            center_pix = (p[ig*6 + 1], p[ig*6 + 2])
                             bm_pix = N.array([img.pixel_beam()[0], img.pixel_beam()[1], img.pixel_beam()[2]])
                             total_flux[sind, ig] = p[ig*6]*p[ig*6+3]*p[ig*6+4]/(bm_pix[0]*bm_pix[1])
                         p = N.insert(p, N.arange(len(fitfix))*6+6, total_flux[sind])
@@ -263,7 +205,7 @@ class Op_polarisation(Op):
                         else:
                             rms_img = img.rms_arr
                         if len(rms_img.shape) > 1:
-                            rms_isl = rms_img[isl.bbox].mean()
+                            rms_isl = rms_img[tuple(isl.bbox)].mean()
                         else:
                             rms_isl = rms_img
                         errors[sind] = func.get_errors(img, p, rms_isl)[6]
@@ -279,6 +221,7 @@ class Op_polarisation(Op):
                 src_flux_V_err_sq = 0.0
 
                 for ig, gaussian in enumerate(src.gaussians):
+                    init_gaus_attr(gaussian)
                     flux_I = total_flux[0, ig]
                     flux_I_err = abs(errors[0, ig])
                     flux_Q = total_flux[1, ig]
@@ -333,6 +276,7 @@ class Op_polarisation(Op):
                     gaussian.lpol_angle_err = lpol_ang_err
 
                 # Store fluxes for each source in the island
+                init_src_attr(src)
                 if hasattr(src, '_pi'):
                     src.total_flux = src_flux_I
                     src.total_fluxE = N.sqrt(src_flux_I_err_sq)
@@ -522,8 +466,6 @@ class Op_polarisation(Op):
 
   ####################################################################################
     def setpara_bdsm(self, img):
-        from types import ClassType, TypeType
-
         chain = [Op_preprocess, Op_rmsimage(), Op_threshold(), Op_islands(),
                  Op_gausfit(), Op_gaul2srl(), Op_make_residimage()]
 
@@ -539,7 +481,7 @@ class Op_polarisation(Op):
 
         ops = []
         for op in chain:
-          if isinstance(op, (ClassType, TypeType)):
+          if isinstance(op, type):
             ops.append(op())
           else:
             ops.append(op)
@@ -622,9 +564,84 @@ def renumber_islands(img):
         for dg in isl.dgaul:
             dg.island_id = i
         if i == 0:
-            img.pyrank[isl.bbox] = N.invert(isl.mask_active) - 1
+            img.pyrank[tuple(isl.bbox)] = N.invert(isl.mask_active) - 1
         else:
-            img.pyrank[isl.bbox] = N.invert(isl.mask_active) * isl.island_id - isl.mask_active
+            img.pyrank[tuple(isl.bbox)] = N.invert(isl.mask_active) * isl.island_id - isl.mask_active
     gaussian_list = [g for isl in img.islands for g in isl.gaul]
     img.gaussians = gaussian_list
 
+
+def init_gaus_attr(gaussian):
+    ### Insert polarization attributes
+    gaussian.total_flux_Q_def        = Float(doc="Total flux density (Jy), Stokes Q", colname='Total_Q',
+                                       units='Jy')
+    gaussian.total_fluxE_Q_def       = Float(doc="Error in total flux density (Jy), Stokes Q", colname='E_Total_Q',
+                                       units='Jy')
+    gaussian.total_flux_U_def        = Float(doc="Total flux density (Jy), Stokes U", colname='Total_U',
+                                       units='Jy')
+    gaussian.total_fluxE_U_def       = Float(doc="Error in total flux density (Jy), Stokes U", colname='E_Total_U',
+                                       units='Jy')
+    gaussian.total_flux_V_def        = Float(doc="Total flux density (Jy), Stokes V", colname='Total_V',
+                                       units='Jy')
+    gaussian.total_fluxE_V_def       = Float(doc="Error in total flux density (Jy), Stokes V", colname='E_Total_V',
+                                       units='Jy')
+    gaussian.lpol_fraction_def       = Float(doc="Linear polarisation fraction",
+                                       colname='Linear_Pol_frac', units=None)
+    gaussian.lpol_fraction_loerr_def   = Float(doc="Linear polarisation fraction low error",
+                                       colname='Elow_Linear_Pol_frac', units=None)
+    gaussian.lpol_fraction_hierr_def   = Float(doc="Linear polarisation fraction high error",
+                                       colname='Ehigh_Linear_Pol_frac', units=None)
+    gaussian.cpol_fraction_def       = Float(doc="Circular polarisation fraction",
+                                       colname='Circ_Pol_Frac', units=None)
+    gaussian.cpol_fraction_loerr_def   = Float(doc="Circular polarisation fraction low error",
+                                       colname='Elow_Circ_Pol_Frac', units=None)
+    gaussian.cpol_fraction_hierr_def   = Float(doc="Circular polarisation fraction high error",
+                                       colname='Ehigh_Circ_Pol_Frac', units=None)
+    gaussian.tpol_fraction_def       = Float(doc="Total polarisation fraction",
+                                       colname='Total_Pol_Frac', units=None)
+    gaussian.tpol_fraction_loerr_def   = Float(doc="Total polarisation fraction low error",
+                                       colname='Elow_Total_Pol_Frac', units=None)
+    gaussian.tpol_fraction_hierr_def   = Float(doc="Total polarisation fraction high error",
+                                       colname='Ehigh_Total_Pol_Frac', units=None)
+    gaussian.lpol_angle_def          = Float(doc="Polarisation angle (deg from North towards East)",
+                                       colname='Linear_Pol_Ang', units='deg')
+    gaussian.lpol_angle_err_def      = Float(doc="Polarisation angle error (deg)",
+                                       colname='E_Linear_Pol_Ang', units='deg')
+
+
+def init_src_attr(source):
+    ### Insert polarization attributes
+    source.total_flux_Q_def        = Float(doc="Total flux density (Jy), Stokes Q", colname='Total_Q',
+                                       units='Jy')
+    source.total_fluxE_Q_def       = Float(doc="Error in total flux density (Jy), Stokes Q", colname='E_Total_Q',
+                                       units='Jy')
+    source.total_flux_U_def        = Float(doc="Total flux density (Jy), Stokes U", colname='Total_U',
+                                       units='Jy')
+    source.total_fluxE_U_def       = Float(doc="Error in total flux density (Jy), Stokes U", colname='E_Total_U',
+                                       units='Jy')
+    source.total_flux_V_def        = Float(doc="Total flux density (Jy), Stokes V", colname='Total_V',
+                                       units='Jy')
+    source.total_fluxE_V_def       = Float(doc="Error in total flux density (Jy), Stokes V", colname='E_Total_V',
+                                       units='Jy')
+    source.lpol_fraction_def       = Float(doc="Linear polarisation fraction",
+                                       colname='Linear_Pol_frac', units=None)
+    source.lpol_fraction_loerr_def   = Float(doc="Linear polarisation fraction low error",
+                                       colname='Elow_Linear_Pol_frac', units=None)
+    source.lpol_fraction_hierr_def   = Float(doc="Linear polarisation fraction high error",
+                                       colname='Ehigh_Linear_Pol_frac', units=None)
+    source.cpol_fraction_def       = Float(doc="Circular polarisation fraction",
+                                       colname='Circ_Pol_Frac', units=None)
+    source.cpol_fraction_loerr_def   = Float(doc="Circular polarisation fraction low error",
+                                       colname='Elow_Circ_Pol_Frac', units=None)
+    source.cpol_fraction_hierr_def   = Float(doc="Circular polarisation fraction high error",
+                                       colname='Ehigh_Circ_Pol_Frac', units=None)
+    source.tpol_fraction_def       = Float(doc="Total polarisation fraction",
+                                       colname='Total_Pol_Frac', units=None)
+    source.tpol_fraction_loerr_def   = Float(doc="Total polarisation fraction low error",
+                                       colname='Elow_Total_Pol_Frac', units=None)
+    source.tpol_fraction_hierr_def   = Float(doc="Total polarisation fraction high error",
+                                       colname='Ehigh_Total_Pol_Frac', units=None)
+    source.lpol_angle_def          = Float(doc="Polarisation angle (deg from North towards East)",
+                                       colname='Linear_Pol_Ang', units='deg')
+    source.lpol_angle_err_def      = Float(doc="Polarisation angle error (deg)",
+                                       colname='E_Linear_Pol_Ang', units='deg')
