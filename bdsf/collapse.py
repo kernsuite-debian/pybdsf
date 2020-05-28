@@ -4,18 +4,15 @@ Defines operation Op_collapse which collapses 3D image. Calculates and
 stores mean and rms (normal and clipped) per channel anyway for further
 use, even if weights are unity.
 """
+from __future__ import absolute_import
 
 import numpy as N
-from image import *
-import _cbdsm
-import mylogger
-import functions as func
+from .image import *
+from . import _cbdsm
+#_cbdsm.init_numpy()
+from . import mylogger
+from . import functions as func
 
-avspc_wtarr = NArray(doc = "Weight array for channel collapse")
-channel_rms = NArray(doc = "RMS per channel")
-channel_mean = NArray(doc = "Mean per channel")
-channel_clippedrms = NArray(doc = "Clipped RMS per channel")
-channel_clippedmean = NArray(doc = "Clipped mean per channel")
 
 class Op_collapse(Op):
     """Collapse 3D image"""
@@ -133,46 +130,26 @@ class Op_collapse(Op):
       mylogger.userinfo(mylog, "Number of blank pixels", str(img.blankpix)
                         + ' (' + str(frac_blank * 100.0) + '%)')
 
-      # Check whether the input image might be an AWimage. If so, and there
-      # are no blank pixels, tell the user that they might to set blank_limit.
-      # Once the AWimager incorporates blanking, this check can be removed.
-      if img.opts.blank_limit is None and (img.blankpix == 0 and
-              ('restored' in img.filename.lower() or
-              'corr' in img.filename.lower() or
-              'aw' in img.filename.lower())):
-          check_low = True
-      else:
-          check_low = False
-
-      if img.opts.blank_limit is not None or check_low:
+      if img.opts.blank_limit is not None:
           import scipy
           import sys
-          if check_low:
-              threshold = 1e-5
-          else:
-              threshold = img.opts.blank_limit
-              mylogger.userinfo(mylog, "Blanking pixels with values "
-                  "below %.1e Jy/beam" % (threshold,))
+          threshold = img.opts.blank_limit
+          mylogger.userinfo(mylog, "Blanking pixels with values "
+                            "below %.1e Jy/beam" % (threshold,))
           bad = (abs(image) < threshold)
           original_stdout = sys.stdout  # keep a reference to STDOUT
           sys.stdout = func.NullDevice()  # redirect the real STDOUT
           count = scipy.signal.convolve2d(bad, N.ones((3, 3)), mode='same')
           sys.stdout = original_stdout  # turn STDOUT back on
           mask_low = (count >= 5)
-          if check_low:
-              nlow = len(N.where(mask_low)[0])
-              if nlow / float(image.shape[0] * image.shape[1]) > 0.2:
-                  mylog.warn('A significant area of the image has very low values. To blank\nthese regions (e.g., because they are outside the primary beam), set the\nblank_limit option (values of 1e-5 to 1e-4 Jy/beam usually work well).\n')
-
-          else:
-              image[N.where(mask_low)] = N.nan
-              mask = N.isnan(image)
-              img.blankpix = N.sum(mask)
-              frac_blank = round(
-                  float(img.blankpix) / float(image.shape[0] *
-                  image.shape[1]), 3)
-              mylogger.userinfo(mylog, "Total number of blanked pixels",
-                  str(img.blankpix) + ' (' + str(frac_blank * 100.0) + '%)')
+          image[N.where(mask_low)] = N.nan
+          mask = N.isnan(image)
+          img.blankpix = N.sum(mask)
+          frac_blank = round(
+              float(img.blankpix) / float(image.shape[0] *
+              image.shape[1]), 3)
+          mylogger.userinfo(mylog, "Total number of blanked pixels",
+              str(img.blankpix) + ' (' + str(frac_blank * 100.0) + '%)')
 
       masked = mask.any()
       img.masked = masked
@@ -184,6 +161,7 @@ class Op_collapse(Op):
       if img.blankpix == image.shape[0] * image.shape[1]:
           # ALL pixels are blanked!
           raise RuntimeError('All pixels in the image are blanked.')
+      
       img.completed_Ops.append('collapse')
 
 

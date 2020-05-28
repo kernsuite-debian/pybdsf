@@ -4,7 +4,7 @@ This module simply stores the version number, as well as a changelog.
 """
 
 # Version number
-__version__ = '1.8.15'
+__version__ = '1.9.2'
 
 
 # Changelog
@@ -12,6 +12,28 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
+    2019/12/05 - Version 1.9.2
+
+    2019/12/04 - Fix exception behaviour if spline order change does not work
+
+    2019/09/27 - Add check for frequency info in header
+
+    2019/09/25 - Version 1.9.1
+
+    2019/09/25 - Fix various minor bugs
+
+    2019/06/06 - Fix blank_limit check_low error (#100)
+
+    2019/05/09 - Fix various shapelet decomposition issues
+
+    2019/05/08 - Fix crash in Gaussian fitting (#96)
+
+    2019/03/25 - Version 1.9.0
+
+    2018/10/18 - Add support for Python 3
+
+    2018/10/18 - Fix various minor bugs
+
     2018/10/12 - Version 1.8.15
 
     2018/10/09 - Fix segfault in Gaussian fitting (#63)
@@ -28,7 +50,8 @@ def changelog():
 
     2018/05/18 - Append the image FITS header into catalog FITS header (#53)
 
-    2018/05/18 - Make PyBDSF compatible with newer boost libraries, specifically those used in Ubuntu 18.04 (#55)
+    2018/05/18 - Make PyBDSF compatible with newer boost libraries, specifically
+        those used in Ubuntu 18.04 (#55)
 
     2017/11/17 - Version 1.8.13
 

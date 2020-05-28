@@ -3,6 +3,28 @@
 **********
 What's New
 **********
+
+Version 1.9.2 (2019/12/05):
+    * Fix exception behaviour if spline order change does not work
+
+    * 2019/09/27 - Add check for frequency info in header
+
+Version 1.9.1 (2019/09/25):
+
+    * Fix various shapelet decomposition issues
+
+    * Fix crash in Gaussian fitting (#96)
+
+    * Fix blank_limit check_low error (#100)
+
+    * Fix various minor bugs
+
+Version 1.9.0 (2019/03/25):
+
+    * Add support for Python 3
+
+    * Fix various minor bugs
+
 Version 1.8.15 (2018/10/12):
 
     * Fix segfault in Gaussian fitting (#63)
