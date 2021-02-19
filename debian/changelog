@@ -1,3 +1,11 @@
+pybdsf (1.9.2-1kern1) focal; urgency=medium
+
+  [ Athanaseus Javas Ramaila ]
+  * Drop py2 support 
+  * Build for focal
+
+ -- KERN packaging <packaging@kernsuite.info>  Fri, 19 Feb 2021 12:37:54 +0000
+
 pybdsf (1.9.2-1kern1) bionic; urgency=medium
 
   [ Athanaseus Javas Ramaila ]

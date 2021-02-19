@@ -3,13 +3,10 @@
 #
 # Uncomment this to turn on verbose mode.
 export DH_VERBOSE=1
-export PYBUILD_AFTER_INSTALL := \
-       mv {destdir}/{install_dir}/bdsf/nat/natgridmodule.so \
-          {destdir}/{install_dir}/bdsf/nat/natgridmodulemodule.so
 
 %:
-	dh $@ --with python2 --buildsystem=pybuild
+	dh $@ --with python3 --buildsystem=pybuild
 
-override_dh_python:
-	dh_python
-	dh_numpy
+override_dh_python3:
+	dh_python3
+	dh_numpy3
