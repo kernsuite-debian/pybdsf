@@ -19,7 +19,6 @@ from . import functions as func
 import gc
 from numpy import array, product
 import scipy.signal
-from scipy.signal.signaltools import _centered
 from .readimage import Op_readimage
 from .preprocess import Op_preprocess
 from .rmsimage import Op_rmsimage
@@ -40,8 +39,9 @@ try:
     N.fft.ifftn = pyfftw.interfaces.numpy_fft.ifftn
     scipy.signal.signaltools.fftn = pyfftw.interfaces.scipy_fftpack.fftn
     scipy.signal.signaltools.ifftn = pyfftw.interfaces.scipy_fftpack.ifftn
+    has_pyfftw = True
 except ImportError:
-    pass
+    has_pyfftw = False
 
 
 class Op_wavelet_atrous(Op):
@@ -49,7 +49,7 @@ class Op_wavelet_atrous(Op):
 
     def __call__(self, img):
 
-        mylog = mylogger.logging.getLogger("PyBDSM." + img.log + "Wavelet")
+        mylog = mylogger.logging.getLogger("PyBDSF." + img.log + "Wavelet")
 
         if img.opts.atrous_do:
           if img.nisl == 0:
@@ -398,7 +398,7 @@ class Op_wavelet_atrous(Op):
         wimg.wcs_obj = img.wcs_obj
         wimg.parentname = img.filename
         wimg.filename = img.filename + name
-        wimg.imagename = img.imagename + name + '.pybdsm'
+        wimg.imagename = img.imagename + name + '.pybdsf'
         wimg.pix2sky = img.pix2sky
         wimg.sky2pix = img.sky2pix
         wimg.pix2beam = img.pix2beam
@@ -489,7 +489,7 @@ class Op_wavelet_atrous(Op):
                 pl.plot(ind[0] + isl.origin[0], ind[1] + isl.origin[1], '.', color = col)
                 pl.axis([0.0, sh[0], 0.0, sh[1]])
                 pl.title('J = ' + str(jj))
-            pl.savefig(bdir + img.imagename + '.pybdsm.atrous.pyramidsrc.png')
+            pl.savefig(bdir + img.imagename + '.pybdsf.atrous.pyramidsrc.png')
 
 #######################################################################################################
 
@@ -561,9 +561,9 @@ def fftconvolve(in1, in2, mode="full", pad_to_power_of_two=True, numcores=1):
             osize = s1
         else:
             osize = s2
-        return _centered(ret, osize)
+        return func.centered(ret, osize)
     elif mode == "valid":
-        return _centered(ret, abs(s2 - s1) + 1)
+        return func.centered(ret, abs(s2 - s1) + 1)
 
 
 def rebase_bbox(box,minv):
@@ -690,7 +690,8 @@ def check_islands_for_overlap(img, wimg):
 
     # Make "images" of island ids for overlaping regions
     orig_islands = wav_rankim_bool * (img.pyrank + 1) - 1
-    bar.start()
+    if not img.opts.quiet:
+        bar.start()
     for idx, wvisl in enumerate(wimg.islands):
         if len(wvisl.gaul) > 0:
             # Get unique island IDs. If an island overlaps with one
@@ -725,7 +726,8 @@ def check_islands_for_overlap(img, wimg):
                 new_isl.island_id = isl_id
                 img.islands.append(new_isl)
                 copy_gaussians(img, new_isl, wvisl)
-        bar.increment()
+        if not img.opts.quiet:
+            bar.increment()
     bar.stop()
 
     return tot_flux

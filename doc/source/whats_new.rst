@@ -4,10 +4,49 @@
 What's New
 **********
 
+Version 1.10.3 (2023/05/22):
+
+    * Fix build issue with Python 3.11 (#205)
+
+    * Use cibuildwheel to build binary wheels for Linux and MacOS (Intel); drop support for Python 3.6 (#203)
+
+    * Fix #198. Use the new method call `canvas.manager.set_window_title` (#199)
+
+    * Replace Travis CI with GitHub actions (#196)
+
+Version 1.10.2 (2023/02/10):
+    * Fix issues with numpy versions >= 1.24 (#193)
+
+    * Switch to `manylinux2014` for building binary wheels (#191)
+
+    * Fix ImportError in setuptools (#190)
+
+    * Add binary wheels for Python 3.10 (#186)
+
+    * Fix various documentation issues (#185)
+
+    * Add logfilename option (#181)
+
+    * Use len() instead of numpy.alen() (#180)
+
+Version 1.10.1 (2022/02/14):
+    * Fix NumPy API compatibility issue
+
+Version 1.10.0 (2022/02/09):
+    * Update some functions as required by scipy version >= 1.8.0 (PR #172)
+
+    * Fix build issues with Python 3.8, end support for Python < 3.6, add support for Python 3.8 and 3.9, and make installation of the interactive pybdsf shell optional (PR #169)
+
+    * Improve handling of the beam in the spectral index module (PR #165)
+
+    * Improve handling of large, complex islands (PR #160)
+
+    * Allow a file to be supplied for the ch0 image used in the spectral index module (PR #127)
+
 Version 1.9.2 (2019/12/05):
     * Fix exception behaviour if spline order change does not work
 
-    * 2019/09/27 - Add check for frequency info in header
+    * Add check for frequency info in header
 
 Version 1.9.1 (2019/09/25):
 

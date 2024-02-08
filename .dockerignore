@@ -1,0 +1,7 @@
+.git/
+build/
+dist/
+doc/build/
+*.egg-info/
+manylinux*/
+venv/
