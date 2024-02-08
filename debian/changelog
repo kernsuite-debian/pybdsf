@@ -1,3 +1,11 @@
+pybdsf (1.10.3-1kern1) jammy; urgency=medium
+
+  [ Athanaseus Javas Ramaila ]
+  * New upstream version 1.10.3 
+  * Build for jammy
+
+ -- KERN packaging <packaging@kernsuite.info>  Thu, 08 Feb 2024 10:57:45 +0000
+
 pybdsf (1.9.2-1kern1) focal; urgency=medium
 
   [ Athanaseus Javas Ramaila ]
