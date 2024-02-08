@@ -4,7 +4,7 @@ This module simply stores the version number, as well as a changelog.
 """
 
 # Version number
-__version__ = '1.9.2'
+__version__ = '1.10.3'
 
 
 # Changelog
@@ -12,6 +12,54 @@ def changelog():
     """
     PyBDSF Changelog.
     -----------------------------------------------------------------------
+    2023/05/22 - Version 1.10.3
+
+    2023/05/08 - Fix build issue with Python 3.11 (#205)
+
+    2023/05/03 - Use cibuildwheel to build binary wheels (#203)
+        Build binary wheels for Linux and MacOS (Intel).
+        Drop support for Python 3.6.
+
+    2023/05/02 - Fix #198 (#199)
+        Use the new method call `canvas.manager.set_window_title`
+
+    2023/04/28 - Replace Travis CI with GitHub actions (#196)
+
+    2023/02/10 - Version 1.10.2
+
+    2023/02/10 - Fix issues with numpy versions >= 1.24 (#193)
+
+    2022/11/28 - Switch to `manylinux2014` for building binary wheels (#191)
+
+    2022/11/23 - Fix ImportError in setuptools (#190)
+
+    2022/10/31 - Add binary wheels for Python 3.10 (#186)
+
+    2022/10/14 - Fix various documentation issues (#185)
+
+    2022/10/11 - Add logfilename option (#181)
+
+    2022/10/05 - Use len() instead of numpy.alen() (#180)
+
+    2022/02/14 - Version 1.10.1: Fix Numpy API incompatibility issue
+
+    2022/02/09 - Version 1.10.0
+
+    2022/02/09 - Update some functions as required by scipy versions >= 1.8.0
+        (PR #172)
+
+    2022/02/09 - Fix build issues with Python 3.8, end support for Python < 3.6,
+        add support for Python 3.8 and 3.9, and make installation of the interactive
+        pybdsf shell optional (PR #169)
+
+    2022/02/09 - Improve handling of the beam in the spectral index module
+        (PR #165)
+
+    2021/05/05 - Improve handling of large, complex islands (PR #160)
+
+    2020/04/07 - Allow a file to be supplied for the ch0 image used in the
+        spectral index module (PR #127)
+
     2019/12/05 - Version 1.9.2
 
     2019/12/04 - Fix exception behaviour if spline order change does not work

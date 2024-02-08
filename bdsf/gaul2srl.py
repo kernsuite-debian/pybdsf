@@ -44,6 +44,7 @@ class Op_gaul2srl(Op):
         sources = []
         dsources = []
         no_gaus_islands = []
+        no_gaus_islands_flag_values = []
         for iisl, isl in enumerate(img.islands):
             isl_sources = []
             isl_dsources = []
@@ -65,6 +66,10 @@ class Op_gaul2srl(Op):
                 if not img.waveletimage:
                     dg = isl.dgaul[0]
                     no_gaus_islands.append((isl.island_id, dg.centre_pix[0], dg.centre_pix[1]))
+                    flag_values = []
+                    for fg in isl.fgaul:
+                        flag_values.append(fg.flag)
+                    no_gaus_islands_flag_values.append(flag_values)
                     # Put in the dummy Source as the source and use negative IDs
                     g_list = isl.dgaul
                     dsrc_index, dsource = self.process_single_gaussian(img, g_list, dsrc_index, code = 'S')
@@ -84,18 +89,29 @@ class Op_gaul2srl(Op):
                 message += ':\n'
             else:
                 message += 's:\n'
-            for isl_id in no_gaus_islands:
-                message += '    Island #%i (x=%i, y=%i)\n' % isl_id
+            for isl_id, flag_list in zip(no_gaus_islands, no_gaus_islands_flag_values):
+                message += '    Island #%i (x=%i, y=%i): ' % isl_id
+                if len(flag_list) > 0:
+                    flags_str = '{}'.format(', '.join([str(f) for f in flag_list]))
+                    if len(flag_list) == 1:
+                        pl_str = ''
+                    else:
+                        pl_str = 's'
+                    message += 'fit with {0} Gaussian{1} with flag{1} = {2}\n'.format(len(flag_list), pl_str, flags_str)
+                else:
+                    message += '\n'
             if len(no_gaus_islands) == 1:
                 message += 'Please check this island. If it is a valid island and\n'
             else:
                 message += 'Please check these islands. If they are valid islands and\n'
             if img.opts.atrous_do:
                 message += 'should be fit, try adjusting the flagging options (use\n'\
-                           'show_fit with "ch0_flagged=True" to see the flagged Gaussians).'
+                           'show_fit with "ch0_flagged=True" to see the flagged Gaussians\n'\
+                           'and "help \'flagging_opts\'" to see the meaning of the flags).'
             else:
                 message += 'should be fit, try adjusting the flagging options (use\n'\
-                           'show_fit with "ch0_flagged=True" to see the flagged Gaussians)\n'\
+                           'show_fit with "ch0_flagged=True" to see the flagged Gaussians\n'\
+                           'and "help \'flagging_opts\'" to see the meaning of the flags)\n'\
                            'or enabling the wavelet module (with "atrous_do=True").'
             message += '\nTo include empty islands in output source catalogs, set\n'\
                         'incl_empty=True in the write_catalog task.'
@@ -203,7 +219,7 @@ class Op_gaul2srl(Op):
         from . import functions as func
 
         def same_island_min(pair, g_list, subim, delc, tol=0.5):
-            """ If the minimum of the reconstructed fluxes along the line joining the peak positions
+            """ If the difference between the lower peak and the minimum of the reconstructed fluxes along the line joining the peak positions
                 is greater than thresh_isl times the rms_clip, they belong to different islands. """
 
             g1 = g_list[pair[0]]
@@ -321,10 +337,10 @@ class Op_gaul2srl(Op):
         maxv = N.max(subim_src)
         maxx, maxy = N.unravel_index(N.argmax(subim_src), subim_src.shape)
                                         # fit gaussian around this posn
-        blc = N.zeros(2,dtype=N.int); trc = N.zeros(2,dtype=N.int)
+        blc = N.zeros(2,dtype=int); trc = N.zeros(2,dtype=int)
         n, m = subim_src.shape[0:2]
         bm_pix = N.array([img.pixel_beam()[0]*fwsig, img.pixel_beam()[1]*fwsig, img.pixel_beam()[2]])
-        ssubimsize = max(N.int(N.round(N.max(bm_pix[0:2])*2))+1, 5)
+        ssubimsize = max(int(N.round(N.max(bm_pix[0:2])*2))+1, 5)
         blc[0] = max(0, maxx-(ssubimsize-1)/2); blc[1] = max(0, maxy-(ssubimsize-1)/2)
         trc[0] = min(n, maxx+(ssubimsize-1)/2); trc[1] = min(m, maxy+(ssubimsize-1)/2)
         s_imsize = trc - blc + 1
@@ -353,10 +369,10 @@ class Op_gaul2srl(Op):
         # posn from gaussian fit instead.
         if N.isnan(mompara[1]):
             mompara[1] = posn[0] - delc[0]
-        x1 = N.int(N.floor(mompara[1]))
+        x1 = int(N.floor(mompara[1]))
         if N.isnan(mompara[2]):
             mompara[2] = posn[1] - delc[1]
-        y1 = N.int(N.floor(mompara[2]))
+        y1 = int(N.floor(mompara[2]))
         xind = slice(x1, x1+2, 1); yind = slice(y1, y1+2, 1)
         if img.opts.flag_smallsrc and (N.sum(mask[xind, yind]==N.ones((2,2))*isrc) != 4):
             mylog.debug('Island = '+str(isl.island_id))

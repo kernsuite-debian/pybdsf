@@ -1,6 +1,12 @@
+# some functions
 from __future__ import print_function
 from __future__ import absolute_import
-# some functions
+
+try:
+    # For Python 2
+    basestring = basestring
+except NameError:
+    basestring = str
 
 def poly(c,x):
     """ y = Sum { c(i)*x^i }, i=0,len(c)"""
@@ -527,18 +533,18 @@ def std(y):
 def imageshift(image, shift):
     """ Shifts a 2d-image by the tuple (shift). Positive shift is to the right and upwards.
     This is done by fourier shifting. """
-    import scipy
+    import scipy.fft
     from scipy import ndimage
 
     shape=image.shape
 
-    f1=scipy.fft(image, shape[0], axis=0)
-    f2=scipy.fft(f1, shape[1], axis=1)
+    f1=scipy.fft.fft(image, shape[0], axis=0)
+    f2=scipy.fft.fft(f1, shape[1], axis=1)
 
     s=ndimage.fourier_shift(f2,shift, axis=0)
 
-    y1=scipy.ifft(s, shape[1], axis=1)
-    y2=scipy.ifft(y1, shape[0], axis=0)
+    y1=scipy.fft.ifft(s, shape[1], axis=1)
+    y2=scipy.fft.ifft(y1, shape[0], axis=0)
 
     return y2.real
 
@@ -1180,7 +1186,7 @@ def read_image_from_file(filename, img, indir, quiet=False):
     if not quiet:
         mylogger.userinfo(mylog, "Opened '"+image_file+"'")
     if img.use_io == 'rap':
-        tmpdir = img.parentname+'_tmp'
+        tmpdir = os.path.join(img.outdir, img.parentname+'_tmp')
         hdr = convert_casacore_header(inputimage, tmpdir)
         coords = inputimage.coordinates()
         img.coords_dict = coords.dict()
@@ -1346,10 +1352,6 @@ def read_image_from_file(filename, img, indir, quiet=False):
 
     mylog.info("Final data shape (npol, nchan, x, y): " + str(data.shape))
 
-    ### and make a copy of it to get proper layout & byteorder
-    data = N.array(data, order='C',
-                   dtype=data.dtype.newbyteorder('='))
-
     return data, hdr
 
 
@@ -1429,14 +1431,15 @@ def write_image_to_file(use, filename, image, img, outdir=None,
             outdir = img.indir
         if not os.path.exists(outdir) and outdir != '':
             os.makedirs(outdir)
-        if os.path.isfile(outdir+filename):
+        outfilename = os.path.join(outdir, filename)
+        if os.path.isfile(outfilename):
             if clobber:
-                os.remove(outdir+filename)
+                os.remove(outfilename)
             else:
                 return
-        if os.path.isdir(outdir+filename):
+        if os.path.isdir(outfilename):
             if clobber:
-                os.system("rm -rf "+outdir+filename)
+                os.system("rm -rf "+outfilename)
             else:
                 return
         temp_im = make_fits_image(N.transpose(image), wcs_obj, img.beam,
@@ -1444,9 +1447,9 @@ def write_image_to_file(use, filename, image, img, outdir=None,
             is_mask=is_mask, shape=(img.shape[1], img.shape[0], image.shape[1],
             image.shape[0]))
         if use == 'rap':
-            outfile = outdir + filename + '.fits'
+            outfile = outfilename + '.fits'
         else:
-            outfile = outdir + filename
+            outfile = outfilename
         try:
             temp_im.writeto(outfile,  overwrite=clobber)
         except TypeError:
@@ -1462,7 +1465,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
                 import casacore.tables as pt
                 import os
                 outimage = pim.image(outfile)
-                outimage.saveas(outdir+filename, overwrite=clobber)
+                outimage.saveas(outfilename, overwrite=clobber)
 
                 # For masks, use the coordinates dictionary from the input
                 # image, as this is needed in order for the
@@ -1471,7 +1474,7 @@ def write_image_to_file(use, filename, image, img, outdir=None,
                     if img.coords_dict is None:
                         mylog.warning('Mask header information may be incomplete.')
                     else:
-                        outtable = pt.table(outdir+filename, readonly=False, ack=False)
+                        outtable = pt.table(outfilename, readonly=False, ack=False)
                         outtable.putkeywords({'coords': img.coords_dict})
                         outtable.done()
 
@@ -1989,7 +1992,7 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
 
     xsize, ysize = mask_size
     if aperture_pix is None:
-        return N.zeros((xsize, ysize), dtype=N.int)
+        return N.zeros((xsize, ysize), dtype=int)
 
     # Make subimages
     xlo = int(posn_pix[0]-int(aperture_pix)-1)
@@ -2005,7 +2008,7 @@ def make_src_mask(mask_size, posn_pix, aperture_pix):
     if yhi > ysize:
         yhi = ysize
 
-    mask = N.zeros((xsize, ysize), dtype=N.int)
+    mask = N.zeros((xsize, ysize), dtype=int)
     posn_pix_new = [posn_pix[0]-xlo, posn_pix[1]-ylo]
     submask_xsize = xhi - xlo
     submask_ysize = yhi - ylo
@@ -2062,7 +2065,12 @@ def eval_func_tuple(f_args):
 def start_samp_proxy():
     """Starts (registers) and returns a SAMP proxy"""
     import os
-    import xmlrpclib
+    try:
+        # Python 3
+        from xmlrpc.client import ServerProxy
+    except ImportError:
+        # Python 2
+        from xmlrpclib import ServerProxy
 
     lockfile = os.path.expanduser('~/.samp')
     if not os.path.exists(lockfile):
@@ -2075,7 +2083,7 @@ def start_samp_proxy():
                 HUB_PARAMS[key] = value.strip()
 
     # Set up proxy
-    s = xmlrpclib.ServerProxy(HUB_PARAMS['samp.hub.xmlrpc.url'])
+    s = ServerProxy(HUB_PARAMS['samp.hub.xmlrpc.url'])
 
     # Register with Hub
     metadata = {"samp.name": 'PyBDSM', "samp.description.text": 'PyBDSM: the Python Blob Detection and Source Measurement software'}
@@ -2245,3 +2253,77 @@ def bstat(indata, mask, kappa_npixbeam):
     r = numpy.sqrt(sigma**2 * (r1 / (r1 - 2.0*kappa*numpy.exp(-kappa**2/2.0))))
 
     return m_raw, r_raw, m, r, iter
+
+
+def centered(arr, newshape):
+    """Return the center newshape portion of the array
+
+    This function is a copy of the private _centered() function in
+    scipy.signal.signaltools
+    """
+    import numpy as np
+
+    newshape = np.asarray(newshape)
+    currshape = np.array(arr.shape)
+    startind = (currshape - newshape) // 2
+    endind = startind + newshape
+    myslice = [slice(startind[k], endind[k]) for k in range(len(endind))]
+    return arr[tuple(myslice)]
+
+
+def set_up_output_paths(opts):
+    """Returns various paths and filenames related to output
+
+    The opts input is either an instance of <class 'bdsf.opts.Opts'> or a
+    dict generated by that class.
+
+    The outputs are:
+        - parentname: the name of the image, with the path and extension removed
+          (if it is a common image extension)
+        - output_basedir: the output directory, where the log file and
+          other optional outputs of the process_image task are placed
+    """
+    import os
+
+    # Get filename and outdir from opts
+    if type(opts) is dict:
+        filename = opts['filename']
+        outdir = opts['outdir']
+    else:
+        # opts is type <class 'bdsf.opts.Opts'>, so options are stored
+        # as attributes
+        filename = opts.filename
+        outdir = opts.outdir
+
+    # Try to trim common extensions from filename to make the parent filename,
+    # used for various output purposes
+    root, ext = os.path.splitext(filename)
+    if ext in ['.fits', '.FITS', '.image']:
+        fname = root
+    elif ext in ['.gz', '.GZ']:
+        root2, ext2 = os.path.splitext(root)
+        if ext2 in ['.fits', '.FITS', '.image']:
+            fname = root2
+        else:
+            fname = root
+    else:
+        fname = filename
+    parentname = os.path.basename(fname)
+
+    # Determine the base output directory
+    if outdir is None:
+        output_basedir = os.path.abspath(os.path.dirname(filename))
+    else:
+        output_basedir = os.path.abspath(outdir)
+
+    # Make the output directory if needed
+    if not os.path.exists(output_basedir):
+        os.makedirs(output_basedir)
+
+    # Check that we have write permission to the base directory
+    if not os.access(output_basedir, os.W_OK):
+        raise RuntimeError("Cannot write to the output directory '{0}' (permission denied). "
+                           "Please specify an output directory to which you have "
+                           "write permission using the 'outdir' option.".format(output_basedir))
+
+    return parentname, output_basedir

@@ -346,7 +346,9 @@ The advanced options are:
       :term:`ini_method` .... 'intensity': Method by which inital guess for fitting of Gaussians is chosen:
                                    'intensity' or 'curvature'
       :term:`kappa_clip` ........... 3.0 : Kappa for clipped mean and rms
-      :term:`minpix_isl` .......... None : Minimal number of pixels with emission per island.
+      :term:`maxpix_isl` .......... None : Maximum number of pixels with emission per island.
+                                   None -> no limit
+      :term:`minpix_isl` .......... None : Minimum number of pixels with emission per island.
                                    None -> calculate inside program
       :term:`ncores` .............. None : Number of cores to use during fitting, None => use
                                    all
@@ -355,6 +357,10 @@ The advanced options are:
       :term:`peak_maxsize` ........ 30.0 : If island size in beam area is more than this,
                                    attempt to fit peaks separately (if
                                    peak_fit=True). Min value is 30
+      :term:`rmsmean_map_filename`  None : Filenames of FITS files to use as the mean and rms maps,
+                                   given as a list [<mean_map.fits>, <rms_map.fits>]. If
+                                   supplied, the internally generated mean and rms maps
+                                   are not used
       :term:`rms_value` ........... None : Value of constant rms in Jy/beam to use if rms_map
                                    = False. None => calculate inside program
       :term:`spline_rank` ............ 3 : Rank of the interpolating function for rms/mean
@@ -495,11 +501,12 @@ The advanced options are:
         This parameter is a float (default is 1.0) that sets the tolerance for
         grouping of Gaussians into sources: larger values will result in larger
         sources. Sources are created by grouping nearby Gaussians as follows:
-        (1) If the minimum value between two Gaussians in an island is more than
-        ``group_tol * thresh_isl * rms_clip``\, and (2) if the centers are
-        separated by a distance less than ``0.5 * group_tol`` of the sum of their
-        FWHMs along the PA of the line joining them, they belong to the same
-        island.
+        (1) If the difference between the minimum value between two Gaussians
+        and the lower of the peak flux densities of the Gaussians in an island
+        is less than ``group_tol * thresh_isl * rms_clip``\, and (2) if the
+        centers are separated by a distance less than ``0.5 * group_tol`` of the
+        sum of their FWHMs along the PA of the line joining them, they belong to
+        the same island.
 
     ini_gausfit
         This parameter is a string (default is ``'default'``). These are three
@@ -537,6 +544,11 @@ The advanced options are:
         source pixels, less number of pixels in total, or significant
         non-Gaussianity of the underlying noise will all lead to non-convergence.
 
+    maxpix_isl
+        This parameter is an integer (default is ``None``) that sets the maximum
+        number of pixels in an island for the island to be included. If
+        ``None``, there is no limit.
+
     minpix_isl
         This parameter is an integer (default is ``None``) that sets the minimum
         number of pixels in an island for the island to be included. If
@@ -561,6 +573,12 @@ The advanced options are:
         This parameter is a float (default is 30.0). If island size in beam area
         is more than this value, attempt to fit peaks iteratively (if ``peak_fit
         = True``). The minimum value is 30.
+
+    rmsmean_map_filename
+        This parameter is a list (default is ``None``) that sets the filenames of
+        FITS files to use as the mean and rms maps, given as a list
+        [<mean_map.fits>, <rms_map.fits>]. If supplied, the internally generated
+        mean and rms maps are not used.
 
     rms_value
         This parameter is a float (default is ``None``) that sets the value of
@@ -717,8 +735,11 @@ The output options are:
                                    filename
       :term:`opdir_overwrite` .. 'overwrite': 'overwrite'/'append': If output_all=True,
                                    delete existing files or append a new directory
+      :term:`outdir` .............. None : Directory to use for all output files
+                                   (including log files). None => parent directory of the
+                                   input filename
       :term:`output_all` ......... False : Write out all files automatically to directory
-                                   'filename_pybdsf'
+                                   'outdir/filename_pybdsf'
       :term:`plot_allgaus` ....... False : Make a plot of all Gaussians at the end
       :term:`plot_islands` ....... False : Make separate plots of each island during fitting
                                    (for large images, this may take a long time and a
@@ -754,8 +775,11 @@ The output options are:
     opdir_overwrite
         This parameter is a string (default is ``'overwrite'``) that determines whether existing output files are overwritten or not.
 
+    outdir
+         This parameter is a string (default is ``None``) that sets the directory to use for all output files (including log files). If ``None``, the parent directory of the input image filename is used.
+
     output_all
-        This parameter is a Boolean (default is ``False``). If ``True``\, all output products are written automatically to the directory ``'filename_pybdsf'``.
+        This parameter is a Boolean (default is ``False``). If ``True``\, all output products are written automatically to the directory ``'outdir/filename_pybdsf'``.
 
     plot_allgaus
         This parameter is a Boolean (default is ``False``). If ``True``\, make a plot of all Gaussians at the end.
@@ -807,8 +831,8 @@ The options concerning multichannel images are:
 .. parsed-literal::
 
     multichan_opts ........ True : Show options for multi-channel images
-      :term:`beam_sp_derive` ..... False : If True and beam_spectrum is None, then assume
-                                   header beam is for median frequency and scales
+      :term:`beam_sp_derive` ...... True : If True and beam_spectrum is None, then assume
+                                   header beam is for lowest frequency and scales
                                    with frequency for channels
       :term:`beam_spectrum` ....... None : FWHM of synthesized beam per channel. Specify as
                                    [(bmaj_ch1, bmin_ch1, bpa_ch1), (bmaj_ch2,
@@ -832,10 +856,10 @@ The options concerning multichannel images are:
 .. glossary::
 
     beam_sp_derive
-        This parameter is a Boolean (default is ``False``). If `True` and the parameter beam_spectrum is ``None``, then we assume that the
-        beam in the header is for the median frequency of the image cube and
+        This parameter is a Boolean (default is ``True``). If `True` and the parameter beam_spectrum is ``None`` and no channel-dependent beam parameters are found in the header, then we assume that the
+        beam in the header is for the lowest frequency of the image cube and
         scale accordingly to calculate the beam per channel. If ``False``, then a
-        constant value of the beam is taken instead.
+        constant value of the beam (that given in the header or specified with the ``beam`` parameter) is taken instead.
 
     beam_spectrum
         This parameter is a list of tuples (default is ``None``) that sets the FWHM of synthesized beam per channel. Specify as [(bmaj_ch1, bmin_ch1,
@@ -843,9 +867,9 @@ The options concerning multichannel images are:
         ``beam_spectrum = [(0.01, 0.01, 45.0), (0.02, 0.01, 34.0)]`` for two
         channels.
 
-        If ``None``, then the channel-dependent restoring beam is either assumed to
-        be a constant or to scale with frequency, depending on whether the
-        parameter ``beam_sp_derive`` is ``False`` or ``True``.
+        If ``None``, then the channel-dependent restoring beam is searched for in the header.
+        If not found, the beam is either assumed to be a constant or to scale with frequency,
+        depending on whether the parameter ``beam_sp_derive`` is ``False`` or ``True``.
 
     collapse_av
         This parameter is a list of integers (default is ``[]``) that specifies the channels to be averaged to produce the
@@ -1046,7 +1070,7 @@ If ``spectralindex_do = True`` (and the input image has more than one frequency)
 
         No color corrections are applied during averaging. However, unless the source spectral index is very steep or the channels are very wide, the correction is minimal. See :ref:`colorcorrections` for details.
 
-* Flux densities are measured for both individual Gaussians and for total sources. Once source flux densities have been measured in each channel, the SEDs are fit with a polynomial function. The best-fit parameters are then included in any catalogs that are written out (see :ref:`write_catalog`). In addition, plots of the fits can be viewed with the ``show_fit`` task (see :ref:`showfit`).
+* Flux densities are measured for both individual Gaussians and for total sources. Once source flux densities have been measured in each channel, the SEDs are fit with the following power-law model: :math:`S_\nu \propto \nu^\alpha`, where :math:`\alpha` is the spectral index. The resulting best-fit spectral index is then included in any catalogs that are written out (see :ref:`write_catalog`). In addition, plots of the fits can be viewed with the ``show_fit`` task (see :ref:`showfit`).
 
 The options for this module are as follows:
 

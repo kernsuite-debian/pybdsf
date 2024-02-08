@@ -3,8 +3,9 @@
 from __future__ import print_function
 
 import platform
-from setuptools import Extension
-from numpy.distutils.core import setup
+import setuptools
+from numpy.distutils.core import setup, Extension
+import numpy
 import sys
 from ctypes.util import find_library
 from os.path import join, realpath, dirname
@@ -110,8 +111,16 @@ def find_library_file(libname):
     lib_dirs = [os.path.join(sys.prefix, 'lib'),
                              '/usr/local/lib',
                              '/usr/lib64',
-                             '/usr/lib',
-                             '/usr/lib/x86_64-linux-gnu']
+                             '/usr/lib']
+    try:
+        lib_dirs.append(os.path.join('/usr/lib',
+                                    getattr(sys, "implementation", sys)
+                                    ._multiarch))
+    except AttributeError:  # This is a non-multiarch aware Python.
+        import sysconfig
+        arch = sysconfig.get_config_var('MULTIARCH')
+        if arch is not None:
+            lib_dirs.append(os.path.join('/usr/lib', arch))
 
     if 'LD_LIBRARY_PATH' in os.environ:
         lib_dirs += os.environ['LD_LIBRARY_PATH'].split(':')
@@ -121,50 +130,82 @@ def find_library_file(libname):
 
 
 def find_boost_python():
-    """Find the name of the boost-python library. Returns None if none is found."""
+    """
+    Find the name and path of boost-python
+
+    Returns:
+        library_name, e.g. 'boost_python-py36'        (a guess if boost is not found)
+        library_dir,  e.g. '/opt/local/boost/lib'     ('' if boost is not found)
+        include_dir,  e.g. '/opt/local/boost/include' ('' if boost is not found)
+    """
     short_version = "{}{}".format(sys.version_info[0], sys.version_info[1])
+    major_version = str(sys.version_info[0])
+
+    # Prefer libraries with python version in their name over unversioned variants
     boostlibnames = ['boost_python-py' + short_version,
                      'boost_python' + short_version,
+                     'boost_python' + major_version,
                      'boost_python',
                      ]
     # The -mt (multithread) extension is used on macOS but not Linux.
     # Look for it first to avoid ending up with a single-threaded version.
-    boostlibnames = [name + '-mt' for name in boostlibnames] + boostlibnames
+    boostlibnames = sum([[name + '-mt', name] for name in boostlibnames], [])
+
     for libboostname in boostlibnames:
-        if find_library_file(libboostname):
-            return libboostname
+        found_lib = find_library_file(libboostname)
+        if found_lib:
+            libdir = dirname(found_lib)
+            includedir = join(dirname(libdir), "include")
+            return libboostname, libdir, includedir
+
     warnings.warn(no_boost_error)
-    return boostlibnames[0]
+    return boostlibnames[0], '', ''
+
 
 def find_boost_numpy():
-    """Find the name of the boost-numpy library. Returns None if none is found."""
+    """
+    Find the name and path of boost-numpy
+
+    Returns:
+        library_name, e.g. 'boost_numpy-py36'         (None if boost_numpy is not found)
+        library_dir,  e.g. '/opt/local/boost/lib'     ('' if boost is not found)
+        include_dir,  e.g. '/opt/local/boost/include' ('' if boost is not found)
+    """
     short_version = "{}{}".format(sys.version_info[0], sys.version_info[1])
+    major_version = str(sys.version_info[0])
+
+    # Prefer libraries with python version in their name over unversioned variants
     boostlibnames = ['boost_numpy-py' + short_version,
                      'boost_numpy' + short_version,
+                     'boost_numpy' + major_version,
                      'boost_numpy',
                      ]
     # The -mt (multithread) extension is used on macOS but not Linux.
     # Look for it first to avoid ending up with a single-threaded version.
-    boostlibnames = [name + '-mt' for name in boostlibnames] + boostlibnames
+    boostlibnames = sum([[name + '-mt', name] for name in boostlibnames], [])
+
     for libboostname in boostlibnames:
-        if find_library_file(libboostname):
-            return libboostname
+        found_lib = find_library_file(libboostname)
+        if found_lib:
+            libdir = dirname(found_lib)
+            includedir = join(dirname(libdir), "include")
+            return libboostname, libdir, includedir
 
     warnings.warn("No library boost_numpy found (this may be no problem)")
-    return None
+    return None, '', ''
 
 
 def main():
-    boost_python_libname = find_boost_python()
-    boost_numpy_libname = find_boost_numpy()
+    boost_python_libname, boost_python_libdir, boost_python_includedir = find_boost_python()
+    boost_numpy_libname, boost_numpy_libdir, boost_numpy_includedir = find_boost_numpy()
 
     extensions = []
 
     fext = Extension(
         name="bdsf._pytesselate",
         sources=[
-            "src/fortran/pytess_simple.f",
-            "src/fortran/pytess_roundness.f"
+            "src/fortran/pytess_roundness.f",
+            "src/fortran/pytess_simple.f"
         ]
     )
     fext.f2py_options = [""]
@@ -189,8 +230,8 @@ def main():
             "src/c++/num_util/num_util.cpp"
         ],
         libraries=libraries,
-        include_dirs=["src/c++"],
-        library_dirs=[join(srcpath, "minpack"), join(srcpath, "port3")]
+        include_dirs=[item for item in ("src/c++", boost_python_includedir, boost_numpy_includedir, numpy.get_include()) if item],
+        library_dirs=[item for item in (join(srcpath, "minpack"), join(srcpath, "port3"), boost_python_libdir, boost_numpy_libdir) if item],
     ))
 
     extensions.append(Extension(
@@ -206,12 +247,13 @@ def main():
 
     setup(
         name='bdsf',
-        version='1.9.2',
+        version='1.10.3',
         author='David Rafferty',
         author_email='drafferty@hs.uni-hamburg.de',
         url='https://github.com/lofar-astron/PyBDSF',
         description='Blob Detection and Source Finder',
         long_description=open('README.rst', 'rt').read(),
+        long_description_content_type='text/x-rst',
         platforms='Linux, Mac OS X',
         packages=['bdsf', 'bdsf.nat'],
         package_dir={'bdsf.nat': join('bdsf', 'nat')},
@@ -219,14 +261,26 @@ def main():
             'Intended Audience :: Science/Research',
             'Programming Language :: C++',
             'Programming Language :: Fortran',
-            'Programming Language :: Python :: 2.7',
             'Programming Language :: Python :: 3',
+            'Programming Language :: Python :: 3.7',
+            'Programming Language :: Python :: 3.8',
+            'Programming Language :: Python :: 3.9',
+            'Programming Language :: Python :: 3.10',
+            'Programming Language :: Python :: 3.11',
             'Topic :: Scientific/Engineering :: Astronomy'
         ],
         ext_modules=extensions,
+        extras_require={
+            'ishell': ['ipython<8.11', 'matplotlib']
+        },
         install_requires=['backports.shutil_get_terminal_size',
-                          'numpy', 'scipy'],
-        scripts=['bdsf/pybdsf', 'bdsf/pybdsm'],
+                          'astropy', 'numpy', 'scipy'],
+        entry_points = {
+            'console_scripts': [
+                'pybdsf = bdsf.pybdsf:main [ishell]',
+                'pybdsm = bdsf.pybdsf:main [ishell]'
+            ]
+        },
         zip_safe=False,
         cmdclass={
             'mclean': CleanStatic,

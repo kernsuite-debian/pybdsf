@@ -37,6 +37,13 @@ import sys
 from .tc import Int, Float, Bool, String, Tuple, Enum, \
     Option, NArray, Instance, tInstance, List, Any, TCInit, tcError
 
+try:
+    # For Python 2
+    basestring = basestring
+except NameError:
+    basestring = str
+
+
 class Opts(object):
     """Class Opts -- user-controllable parameters."""
     advanced_opts = Bool(False,
@@ -216,10 +223,6 @@ class Opts(object):
                                  "significant extended emission in the image, "\
                                  "it is often necessary to force the use of a "\
                                  "constant rms map by setting rms_map = False.")
-
-    rmsmean_map_filename = List(None,doc = "Name of the fits file for the mean and rms maps. Should be a list [<mean_map.fits>,<rms_map.fits>]",
-                             group = 'advanced_opts')
-
     shapelet_do = Bool(False,
                              doc = "Decompose islands into shapelets\n"\
                                  "If True, then each island is decomposed using shapelets, "\
@@ -409,6 +412,12 @@ class Opts(object):
                                  "image header. It is set to 6 pixels for all "\
                                  "wavelet images.",
                              group = "advanced_opts")
+    maxpix_isl = Option(None, Int(),
+                             doc = "Maximum number of pixels with emission per island. "\
+                                 "None -> no limit\n"\
+                                 "This is an integer and is the maximum number of pixels "\
+                                 "in an island for the island to be included.",
+                             group = "advanced_opts")
     rms_value = Option(None, Float(),
                              doc = "Value of constant rms in "\
                                  "Jy/beam to use if rms_map = False. "\
@@ -541,8 +550,10 @@ class Opts(object):
                              doc = "Tolerance for grouping of Gaussians into sources: "\
                                  "larger values will result in larger sources\n"\
                                  "Sources are created by "\
-                                 "grouping nearby Gaussians as follows: (1) If the minimum "\
-                                 "value between two Gaussians in an island is more than "\
+                                 "grouping nearby Gaussians as follows: (1) If the "\
+                                 "difference between the minimum value between two "\
+                                 "Gaussians and the lower of the peak flux densities of "\
+                                 "the Gaussians in an island is less than "\
                                  "group_tol * thresh_isl * rms_clip, "\
                                  "and (2) if the centres are seperated by a distance less "\
                                  "than 0.5*group_tol of the sum of their fwhms along the "\
@@ -565,6 +576,12 @@ class Opts(object):
                                  "3-, or 4-D cube. The detection image and the main"\
                                  "image must have the same size and be registered.",
                              group = "advanced_opts")
+    rmsmean_map_filename = List(None,
+                             doc = "Filenames of FITS files to use as the mean and rms maps, "\
+                                 "given as a list [<mean_map.fits>, <rms_map.fits>]. If "\
+                                 "supplied, the internally generated mean and rms maps "\
+                                 "are not used.",
+                             group = 'advanced_opts')
     do_mc_errors = Bool(False,
                              doc = "Estimate uncertainties for 'M'-type sources using Monte "\
                                 "Carlo method\n"\
@@ -781,25 +798,35 @@ class Opts(object):
                                  "is raised. PyBDSF will not work without the "\
                                  "knowledge of the frequency.",
                              group = "multichan_opts")
-    beam_sp_derive = Bool(False,
+    beam_sp_derive = Bool(True,
                              doc = "If True and beam_spectrum is None, then "\
-                                 "assume header beam is for median frequency and scales "\
+                                 "assume header beam is for lowest frequency and scales "\
                                  "with frequency for channels\n"\
                                  "If True and the parameter beam_spectrum is None, then "\
-                                 "we assume that the beam in the header is for the median "\
+                                 "we assume that the beam in the header is for the lowest "\
                                  "frequency of the image cube and scale accordingly to "\
                                  "calculate the beam per channel. If False, then a "\
                                  "constant value of the beam is taken instead.",
                              group = "multichan_opts")
-    collapse_mode = Enum('average', 'single',
-                             doc = "Collapse method: 'average' "\
-                                 "or 'single'. Average channels or take single "\
+    collapse_mode = Enum('average', 'single', 'file',
+                             doc = "Collapse method: 'average', "\
+                                 "'single', or 'file'. If 'file', use a user-provided"\
+                                 "file, else either average channels or take single "\
                                  "channel to perform source detection on\n"\
                                  "This parameter determines whether, when multiple "\
                                  "channels are present, the source extraction is "\
                                  "done on a single channel or an average of many "\
                                  "channels.",
                              group = 'multichan_opts')
+
+    collapse_file = String(None,
+                             doc = "If collapse_mode is 'file' then use this file"\
+                                 "as the ch0 image. The image supplied can be a FITS or CASA 2-, "\
+                                 "3-, or 4-D cube. The detection image and the main"\
+                                 "image must have the same size and be registered.",
+                             group = 'multichan_opts')
+
+
     collapse_ch0 = Int(0,
                              doc = "Number of the channel for source extraction, "\
                                  "if collapse_mode = 'single', starting from 0",
@@ -839,7 +866,7 @@ class Opts(object):
                              group = "output_opts")
     output_all = Bool(False,
                              doc = "Write out all files automatically to directory "\
-                                 "'filename_pybdsm'",
+                                 "'outdir/filename_pybdsm'",
                              group = "output_opts")
     opdir_overwrite = Enum('overwrite', 'append',
                              doc = "'overwrite'/'append': If output_all=True, "\
@@ -887,6 +914,11 @@ class Opts(object):
     indir = Option(None, String(),
                              doc = "Directory of input FITS files. None => get "\
                                  "from filename",
+                             group = "output_opts")
+    outdir = Option(None, String(),
+                             doc = "Directory to use for all output files "\
+                                 "(including log files). None => parent directory of the "\
+                                 "input filename.",
                              group = "output_opts")
     savefits_residim = Bool(False,
                              doc = "Save residual image as fits file",

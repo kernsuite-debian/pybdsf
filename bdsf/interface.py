@@ -29,14 +29,18 @@ def process(img, **kwargs):
     from . import default_chain, _run_op_list
     from .image import Image
     from . import mylogger
+    from .functions import set_up_output_paths
+    import os
 
     # Start up logger. We need to initialize it each time process() is
     # called, in case the quiet or debug options have changed
-    log = img.opts.filename + '.pybdsf.log'
+    _, basedir = set_up_output_paths(img.opts)
+    basename = os.path.basename(img.opts.filename) + '.pybdsf.log'
+    logfilename = os.path.join(basedir, basename)
     img.log = ''
-    mylogger.init_logger(log, quiet=img.opts.quiet,
-                         debug=img.opts.debug)
-    add_break_to_logfile(log)
+    mylogger.init_logger(logfilename, quiet=img.opts.quiet,
+                             debug=img.opts.debug)
+    add_break_to_logfile(logfilename)
     mylog = mylogger.logging.getLogger("PyBDSF.Process")
     mylog.info("Processing "+img.opts.filename)
 
@@ -73,7 +77,10 @@ def process(img, **kwargs):
             raise
     except KeyboardInterrupt:
         mylogger.userinfo(mylog, "\n\033[31;1mAborted\033[0m")
-        return False
+        if img._is_interactive_shell:
+            return False
+        else:
+            raise
 
 def get_op_chain(img):
     """Determines the optimal Op chain for an Image object.
@@ -272,7 +279,9 @@ def get_op_chain(img):
                     img.completed_Ops.remove('polarisation')
                 found = True
             if k in make_residimage_opts:
-                if hasattr(img, 'resid_gaus_arr'): del img.resid_gaus_arr
+                if hasattr(img, 'resid_gaus_arr'):
+                    del img.resid_gaus_arr
+                    img.resid_gaus_arr = None  # set to init state
                 if hasattr(img, 'model_gaus_arr'): del img.model_gaus_arr
                 if hasattr(img, 'resid_shap_arr'): del img.resid_shap_arr
                 if hasattr(img, 'model_shap_arr'): del img.model_shap_arr
@@ -380,7 +389,8 @@ def save_pars(img, savefile=None, quiet=False):
     import sys
 
     if savefile is None or savefile == '':
-        savefile = img.opts.filename + '.pybdsf.sav'
+        basename = os.path.basename(img.opts.filename) + '.pybdsf.sav'
+        savefile = os.path.join(img.basedir, basename)
 
     # convert opts to dictionary
     pars = img.opts.to_dict()
@@ -928,7 +938,10 @@ def export_image(img, outfile=None, img_format='fits', pad_image = False,
             raise
     except KeyboardInterrupt:
         mylogger.userinfo(mylog, "\n\033[31;1mAborted\033[0m")
-        return False
+        if img._is_interactive_shell:
+            return False
+        else:
+            raise
 
 
 def write_catalog(img, outfile=None, format='bbs', srcroot=None, catalog_type='gaul',
